@@ -7,31 +7,31 @@ import java.lang.reflect.Field;
 public class FileDB {
 
 
-    private String dbPath;
+    private File dbPath;
 
     FileDB(String dbPath) {
-        this.dbPath = dbPath;
-        createDb(dbPath);
+        this(new File(dbPath));
     }
 
-
-    public String getDbPath() {
-        return dbPath;
+    FileDB(File dbPath) {
+        this.dbPath = dbPath;
+        createDb();
     }
 
 
     public File getPersistenceFile(FileDB fileDb, Class entityClass) {
 
-        File file = new File(fileDb.getDbPath() + File.separator +entityClass.getName().toString());
+        File file = new File(dbPath.getAbsolutePath() + File.separator + entityClass.getName().toString());
         return file;
     }
 
-    private void createDb(String dbPath) {
-        File file = new File(dbPath);
+    private void createDb() {
         try {
-            file.mkdir();
-        }catch (Exception e){
-            throw new RuntimeException("Denied to create Directory",e);
+            this.dbPath.mkdir();
+        } catch (Exception e) {
+            throw new RuntimeException("Denied to create Directory", e);
         }
     }
+
+
 }
