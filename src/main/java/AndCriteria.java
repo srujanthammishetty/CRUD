@@ -6,26 +6,26 @@ import java.io.FileReader;
  */
 public class AndCriteria implements Criteria {
 
-    BasicCriteria criteriaOne;
-    BasicCriteria criteriaTwo;
+    Criteria criteriaOne;
+    Criteria criteriaTwo;
 
-    public BasicCriteria getCriteria1() {
+    public Criteria getCriteria1() {
         return criteriaOne;
     }
 
-    public void setCriteria1(BasicCriteria criteriaOne) {
+    public void setCriteria1(Criteria criteriaOne) {
         this.criteriaOne = criteriaOne;
     }
 
-    public BasicCriteria getCriteria2() {
+    public Criteria getCriteria2() {
         return criteriaTwo;
     }
 
-    public void setCriteria2(BasicCriteria criteriaTwo) {
+    public void setCriteria2(Criteria criteriaTwo) {
         this.criteriaTwo = criteriaTwo;
     }
 
-    AndCriteria(BasicCriteria criteriaOne, BasicCriteria criteriaTwo){
+    AndCriteria(Criteria criteriaOne, Criteria criteriaTwo){
         this.criteriaOne=criteriaOne;
         this.criteriaTwo=criteriaTwo;
     }

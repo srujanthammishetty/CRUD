@@ -33,12 +33,17 @@ public class EntityCRUD<T> {
     }
 
 
+
+
     public void add(T entity) {
 
-        String record = "";
+        String record ;
         Writer writer = null;
         try {
             record = objectToString(entity);
+            if (file.exists() && file.length() >= Math.pow(2, 30)) {
+                file = garbageCollector(file);
+            }
             writer = new BufferedWriter(new FileWriter(file, true));
             writer.write(record);
         } catch (IOException e) {
@@ -66,8 +71,10 @@ public class EntityCRUD<T> {
             String[] columnNames = getColumns(bufferedReader);
             Class<?>[] columnTypes = getColumnTypes();
             while ((record = bufferedReader.readLine()) != null) {
-                rowData = getRowData(record);
-                resultList.add(getInstance(columnNames, columnTypes, rowData));
+                if(record.charAt(0)=='Y') {
+                    rowData = getRowData(record);
+                    resultList.add(getInstance(columnNames, columnTypes, rowData));
+                }
             }
         } catch (IOException ie) {
             throw new RuntimeException(ie);
@@ -86,7 +93,7 @@ public class EntityCRUD<T> {
 
     public List<T> get(Criteria criteria) {
 
-        String record = null;
+        String record ;
         List<T> resultList = new ArrayList();
         String[] rowData;
         BufferedReader bufferedReader = null;
@@ -96,9 +103,11 @@ public class EntityCRUD<T> {
             String[] columnNames = getColumns();
             Class<?>[] columnTypes = getColumnTypes();
             while ((record = bufferedReader.readLine()) != null) {
-                rowData = getRowData(record);
-                if (criteria.isMatching(columnNames, rowData)) {
-                    resultList.add(getInstance(columnNames, columnTypes, rowData));
+                if(record.charAt(0)=='Y') {
+                    rowData = getRowData(record);
+                    if (criteria.isMatching(columnNames, rowData)) {
+                        resultList.add(getInstance(columnNames, columnTypes, rowData));
+                    }
                 }
             }
         } catch (IOException fe) {
@@ -134,6 +143,9 @@ public class EntityCRUD<T> {
         long fileLength;
         long endOfFile;
         try {
+            if (file.exists() && file.length() >= Math.pow(2, 30)) {
+                file = garbageCollector(file);
+            }
             randomAccessFile = new RandomAccessFile(file, "rw");
             String[] columnNames = getColumns();
             previousOffset = randomAccessFile.getFilePointer();
@@ -141,7 +153,7 @@ public class EntityCRUD<T> {
             fileLength = randomAccessFile.length();
             while (randomAccessFile.getFilePointer() < fileLength) {
                 record = randomAccessFile.readLine();
-                rowData = getData(record);
+                rowData = getRowData(record);
                 if (criteria.isMatching(columnNames, rowData) && (record.charAt(0) == 'Y')) {
                     currentOffset = randomAccessFile.getFilePointer();
                     randomAccessFile.seek(previousOffset);
@@ -172,10 +184,7 @@ public class EntityCRUD<T> {
         randomAccessFile.write(newRecord.getBytes());
     }
 
-    private String[] getData(String record) {
-        return record.substring(2).split(",");
-    }
-
+ 
 
     private T getInstance(String[] columnNames, Class[] columnTypes, String[] rowdata) {
         int i = 0;
@@ -242,11 +251,11 @@ public class EntityCRUD<T> {
     private String[] getColumns(BufferedReader bufferedReader) throws IOException {
         String record;
         record = bufferedReader.readLine();
-        return getRowData(record);
+        return record.split(",");
     }
 
     private String[] getRowData(String record) {
-        return record.split(",");
+        return record.substring(2).split(",");
     }
 
     private String getSetterMethodName(String columnName) {
@@ -311,6 +320,54 @@ public class EntityCRUD<T> {
             new RuntimeException(e);
         }
         return record;
+    }
+
+    private File garbageCollector(File file) {
+
+        BufferedWriter writer = null;
+        BufferedReader reader = null;
+        File newFile =null;
+        String record;
+        try {
+            newFile= new File(file.getAbsolutePath() + file.getName() +File.separator+ "new");;
+            writer = new BufferedWriter(new FileWriter(newFile, true));
+            reader = new BufferedReader(new FileReader(file));
+            while ((record = reader.readLine()) != null) {
+                if (record.charAt(0) == 'Y') {
+                    writer.write(record);
+                }
+            }
+            try {
+                file.delete();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to delete file",e);
+            }
+            try {
+                newFile.renameTo(file);
+            } catch (Exception e) {
+                throw new RuntimeException("Denied to rename the file",e);
+            }
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return newFile;
     }
 
 }
